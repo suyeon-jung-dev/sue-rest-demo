@@ -1,6 +1,8 @@
 package com.sue.suerestdemo.api;
 
 import com.sue.suerestdemo.domain.Coffee;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.Optional;
  */
 
 @RestController // @Controller + @ResponseBody = JSON 데이터 타입을 반환하게 하여 REST API 에 적합
+@RequestMapping("/coffees")
 public class RestApiDemoController {
     private List<Coffee> coffees = new ArrayList<>();
 
@@ -32,7 +35,7 @@ public class RestApiDemoController {
      * @return
      */
 //    @RequestMapping(value = "/coffees", method = RequestMethod.GET)
-    @GetMapping("/coffees") // 위 코드와 동일. 보일러플레이트 코드를 줄이고 url 경로만 지정 가능하다. 가독성이 훨씬 높은 방법.
+    @GetMapping() // 위 코드와 동일. 보일러플레이트 코드를 줄이고 url 경로만 지정 가능하다. 가독성이 훨씬 높은 방법.
     Iterable<Coffee> getCoffees() {
         return coffees;
     }
@@ -44,7 +47,7 @@ public class RestApiDemoController {
      * @param id : URI 변수. @PathVariable 어노테이션이 달린 id 매개변수를 통해 getCoffeeById() 메서드에 전달.
      * @return
      */
-    @GetMapping("/coffees/{id}")
+    @GetMapping("/{id}")
     Optional<Coffee> getCoffeeById(@PathVariable String id) {
         for (Coffee c : coffees) {
             if (c.getId().equals(id)) {
@@ -61,7 +64,7 @@ public class RestApiDemoController {
      * @param coffee : Spring Boot 의 Jackson 의존성으로 Json 정보를 Coffee 객체로 marshalling 해서 받는다.
      * @return Coffee : 동일하게 객체정보를 Json 형식으로 unmarshalling 해서 응답한다.
      */
-    @PostMapping("/coffees")
+    @PostMapping()
     Coffee postCoffee(@RequestBody Coffee coffee) {
         coffees.add(coffee);
         return coffee;
@@ -76,8 +79,8 @@ public class RestApiDemoController {
      * @param coffee
      * @return
      */
-    @PutMapping("/coffees/{id}")
-    Coffee putcoffee(@PathVariable String id, @RequestBody Coffee coffee) {
+    @PutMapping("/{id}")
+    ResponseEntity<Coffee> putcoffee(@PathVariable String id, @RequestBody Coffee coffee) {
         int coffeeIndex = -1;
 
         for (Coffee c: coffees) {
@@ -87,10 +90,12 @@ public class RestApiDemoController {
             }
         }
 
-        return (coffeeIndex == -1) ? postCoffee(coffee) : coffee;   // 기존 리소스가 없으면 postCoffee 메서드 그대로 사용
+        return (coffeeIndex == -1) ?
+        new ResponseEntity<>(postCoffee(coffee), HttpStatus.CREATED) :  // 기존 리소스가 없으면 postCoffee 메서드 그대로 사용
+        new ResponseEntity<>(coffee, HttpStatus.OK);
     }
 
-    @DeleteMapping("/coffees/{id}")
+    @DeleteMapping("/{id}")
     void deleteCoffee(@PathVariable String id) {
         coffees.removeIf(c -> c.getId().equals(id));
     }
